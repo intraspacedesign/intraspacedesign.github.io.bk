@@ -57,30 +57,33 @@ namespace Gulpfile.Tasks {
   /**
    *
    */
-  function bundleIndex() {
-    const Builder = require('jspm').Builder
-    const builder = new Builder
+  function builder(src, dest) {
+    return function buildStatic() {
+      const Builder = require('jspm').Builder
+      const builder = new Builder
 
-    return builder.buildStatic('dist/index.js', 'dist/scripts.js')
+      return builder.buildStatic(src, dest)
+    }
   }
 
-  function bundleVendor() {
-    const Builder = require('jspm').Builder
-    const builder = new Builder
-
-    return builder.buildStatic('dist/vendor/vendor.js', 'dist/vendor.js')
-  }
+  const buildScripts = series(
+    buildTypeScript,
+    parallel(
+      builder('dist/index.js',         'dist/scripts.js'),
+      builder('dist/vendor/vendor.js', 'dist/vendor.js')
+    )
+  )
 
   /**
    *
    */
   function watchScripts() {
-    return watch(scriptsSrc(), series(parallel(checkScripts, buildTypeScript), bundleIndex))
+    return watch(scriptsSrc(), series(parallel(checkScripts, buildTypeScript), builder('dist/index.js', 'dist/scripts.js')))
   }
 
   exports.clean = cleanScripts
   exports.check = checkScripts
-  exports.build = series(buildTypeScript, bundleIndex, bundleVendor)
+  exports.build = buildScripts
   exports.watch = watchScripts
 
 }
