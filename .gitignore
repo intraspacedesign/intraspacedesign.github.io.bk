@@ -1,0 +1,12 @@
+#
+# .gitignore
+#
+
+**/dist/
+**/gulpfile.js/
+**/jspm_packages/
+**/node_modules/
+**/tmp/
+**/typings/
+
+npm-debug.log
