@@ -78,7 +78,13 @@ namespace Gulpfile.Tasks {
    *
    */
   function watchScripts() {
-    return watch(scriptsSrc(), series(parallel(checkScripts, buildTypeScript), builder('dist/index.js', 'dist/scripts.js')))
+    return watch(scriptsSrc(), series(
+      parallel(
+        checkScripts,
+        buildTypeScript
+      ),
+      builder('dist/index.js', 'dist/scripts.js')
+    ))
   }
 
   exports.clean = cleanScripts
