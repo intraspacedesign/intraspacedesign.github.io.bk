@@ -14,14 +14,22 @@ namespace Gulpfile.Tasks {
    *
    */
   function stylesSrc() {
-    return ['src/**/*.scss']
+    switch (process.env.$$_CONFIGURATION) {
+      case process.env.$$_VARS_DEBUG   :
+      case process.env.$$_VARS_RELEASE : return ['src/**/*.scss']
+    }
+    return null
   }
 
   /**
    *
    */
   function stylesDest() {
-    return 'dist'
+    switch (process.env.$$_CONFIGURATION) {
+      case process.env.$$_VARS_DEBUG   : return process.env.$$_SETTINGS_DEBUG_OUTDIR
+      case process.env.$$_VARS_RELEASE : return process.env.$$_SETTINGS_RELEASE_OUTDIR
+    }
+    return null
   }
 
   /**
@@ -48,12 +56,21 @@ namespace Gulpfile.Tasks {
   /**
    *
    */
+  function ifConfigurationIsDebug():boolean {
+    return (process.env.$$_VARS_DEBUG === process.env.$$_CONFIGURATION)
+  }
+
+  /**
+   *
+   */
   function buildStyles() {
     return src(stylesSrc())
-      .pipe(plug.sourcemaps.init())
+      .pipe(ifConfigurationIsDebug() ? plug.sourcemaps.init() : plug.util.noop())
       .pipe(plug.sass()).on('error', plug.sass.logError)
+      .pipe(ifConfigurationIsDebug ? plug.util.noop() : plug.csso())
+      .pipe(ifConfigurationIsDebug() ? plug.util.noop() : plug.rename({ extname: '.min.css' }))
       .pipe(plug.flatten())
-      .pipe(plug.sourcemaps.write('.'))
+      .pipe(ifConfigurationIsDebug ? plug.sourcemaps.write('.') : plug.util.noop())
       .pipe(dest(stylesDest()))
       .on('error', handleError)
   }

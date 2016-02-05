@@ -14,31 +14,42 @@ namespace Gulpfile.Tasks {
    *
    */
   function scriptsSrc() {
-    return ['src/**/*.ts']
+    switch (process.env.$$_CONFIGURATION) {
+      case process.env.$$_VARS_DEBUG   :
+      case process.env.$$_VARS_RELEASE : return ['src/**/*.ts']
+    }
+    return null
   }
 
   /**
    *
    */
   function scriptsDest() {
-    return 'dist'
+    switch (process.env.$$_CONFIGURATION) {
+      case process.env.$$_VARS_DEBUG   : return process.env.$$_SETTINGS_DEBUG_OUTDIR
+      case process.env.$$_VARS_RELEASE : return process.env.$$_SETTINGS_RELEASE_OUTDIR
+    }
+    return null
   }
 
   /**
    *
    */
   function cleanScripts() {
-    return del(`${scriptsDest()}/**/*.js`)
+    return del(`${scriptsDest()}/**/*.{js,min.js}`)
   }
 
 
   /**
    *
    */
-  function checkScripts() {
+  function checkScripts(nextTask) {
     return src(scriptsSrc())
       .pipe(plug.tslint())
-      .on('error', handleError)
+      .pipe(plug.tslint.report('verbose'), {
+        emitError: false,
+        summarizeFailureOutput: true
+      }).on('error', () => nextTask())
   }
 
   /**
@@ -66,12 +77,30 @@ namespace Gulpfile.Tasks {
     }
   }
 
+  /**
+   *
+   */
+  function ifConfigurationIsDebug():boolean {
+    return (process.env.$$_VARS_DEBUG === process.env.$$_CONFIGURATION)
+  }
+
+  function bundleScripts() {
+    return src([
+        `${scriptsDest()}/scripts.js`,
+        `${scriptsDest()}/vendor.js`
+      ])
+      .pipe(ifConfigurationIsDebug() ? plug.util.noop() : plug.uglify())
+      .pipe(ifConfigurationIsDebug() ? plug.util.noop() : plug.rename({ extname: '.min.js' }))
+      .pipe(dest(scriptsDest()))
+  }
+
   const buildScripts = series(
     buildTypeScript,
     parallel(
-      builder('dist/index.js',         'dist/scripts.js'),
-      builder('dist/vendor/vendor.js', 'dist/vendor.js')
-    )
+      builder(`${scriptsDest()}/index.js`,  `${scriptsDest()}/scripts.js`),
+      builder(`${scriptsDest()}/vendor.js`, `${scriptsDest()}/vendor.js`)
+    ),
+    bundleScripts
   )
 
   /**
