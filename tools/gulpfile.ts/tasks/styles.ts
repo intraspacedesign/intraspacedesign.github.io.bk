@@ -28,7 +28,7 @@ namespace Gulpfile.Tasks {
    *
    */
   function cleanStyles() {
-    return del(stylesDest())
+    return del(`${stylesDest()}/**/*.{css,css.map}`)
   }
 
 

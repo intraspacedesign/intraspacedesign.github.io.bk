@@ -28,7 +28,7 @@ namespace Gulpfile.Tasks {
    *
    */
   function cleanScripts() {
-    return del(scriptsDest())
+    return del(`${scriptsDest()}/**/*.js`)
   }
 
 
